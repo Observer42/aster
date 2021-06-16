@@ -11,7 +11,7 @@ use futures::task::Task;
 use futures::unsync::mpsc::{channel, Sender};
 use futures::{AsyncSink, Future, Sink, Stream};
 
-use tokio::codec::{Decoder, Encoder};
+use tokio_util::codec::{Decoder, Encoder};
 use tokio::net::TcpStream;
 use tokio::prelude::FutureExt;
 use tokio::runtime::current_thread;
@@ -40,11 +40,11 @@ pub trait Request: Clone {
     type Reply: Clone + IntoReply<Self::Reply> + From<AsError>;
 
     type FrontCodec: Decoder<Item = Self, Error = AsError>
-        + Encoder<Item = Self, Error = AsError>
+        + Encoder<Self, Error = AsError>
         + Default
         + 'static;
     type BackCodec: Decoder<Item = Self::Reply, Error = AsError>
-        + Encoder<Item = Self, Error = AsError>
+        + Encoder<Self, Error = AsError>
         + Default
         + 'static;
 

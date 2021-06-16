@@ -1,6 +1,6 @@
 use bytes::{Bytes, BytesMut};
 use futures::task::Task;
-use tokio::codec::{Decoder, Encoder};
+use tokio_util::codec::{Decoder, Encoder};
 
 use crate::metrics::*;
 
@@ -736,10 +736,9 @@ impl Decoder for RedisHandleCodec {
     }
 }
 
-impl Encoder for RedisHandleCodec {
-    type Item = Cmd;
+impl Encoder<Cmd> for RedisHandleCodec {
     type Error = AsError;
-    fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Cmd, dst: &mut BytesMut) -> Result<(), Self::Error> {
         let _ = item.borrow().reply_cmd(dst)?;
         Ok(())
     }
@@ -757,10 +756,9 @@ impl Decoder for RedisNodeCodec {
     }
 }
 
-impl Encoder for RedisNodeCodec {
-    type Item = Cmd;
+impl Encoder<Cmd> for RedisNodeCodec {
     type Error = AsError;
-    fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Cmd, dst: &mut BytesMut) -> Result<(), Self::Error> {
         item.borrow().send_req(dst)
     }
 }
@@ -913,7 +911,7 @@ impl<'a> IntoReply<Message> for &'a str {
 
 impl<'a> IntoReply<Message> for &'a [u8] {
     fn into_reply(self) -> Message {
-        let bytes = Bytes::from(self);
+        let bytes = Bytes::from(self.to_vec());
         Message::inline_raw(bytes)
     }
 }

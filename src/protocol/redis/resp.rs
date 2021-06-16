@@ -4,7 +4,7 @@ use crate::utils::simdfind;
 use crate::utils::Range;
 
 use aho_corasick::AhoCorasick;
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 
 pub const RESP_STRING: u8 = b'+';
 pub const RESP_INT: u8 = b':';
@@ -339,7 +339,7 @@ impl Message {
         let total_len = 1 /* resp_type */ + bytes.len() + 2 /*\r\n*/;
         rdata.reserve(total_len);
         rdata.put_u8(resp_type);
-        rdata.put(&bytes);
+        rdata.put(bytes);
         rdata.put_u8(BYTE_CR);
         rdata.put_u8(BYTE_LF);
 
@@ -574,7 +574,7 @@ fn test_parse() {
 
 #[cfg(test)]
 mod test {
-    use self::super::*;
+    use super::*;
     use assert2::{assert, check};
 
     #[test]

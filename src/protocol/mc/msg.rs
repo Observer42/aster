@@ -1,6 +1,6 @@
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 use byteorder::{BigEndian, ReadBytesExt};
-use bytes::{Bytes, BytesMut};
+use bytes::{Buf, Bytes, BytesMut};
 
 use crate::com::AsError;
 use crate::protocol::CmdFlags;
@@ -652,7 +652,6 @@ impl Message {
             }));
         }
         let len = if let Some(len_data) = (&data[..line - 2])
-            .as_ref()
             .split(|x| *x == BYTE_SPACE)
             .nth(3)
         {
@@ -729,7 +728,7 @@ impl Message {
 
 #[cfg(test)]
 mod test {
-    use self::super::*;
+    use super::*;
     #[test]
     fn test_parse_twice() {
         let sv = "VALUE a 0 2\r\nab\r\nEND\r\nVALUE a 0 3\r\ncde\r\nEND\r\n";
@@ -757,7 +756,7 @@ mod test {
     }
 
     fn test_mc_parse_ok(msg: Message) {
-        let mut data = BytesMut::from(msg.data.clone());
+        let mut data = BytesMut::from(msg.data.as_ref());
         let msg_opt = Message::parse(&mut data).unwrap();
         assert!(msg_opt.is_some());
         assert_eq!(msg_opt.unwrap(), msg);
@@ -905,7 +904,7 @@ mod test {
 
     #[test]
     fn test_parser_error() {
-        let fuzz_data = vec![
+        let fuzz_data: Vec<u8> = vec![
             0x61, 0x64, 0x64, 0x20, 0x20, 0x20, 0x64, 0xa0, 0x20, 0x30, 0x30, 0x30, 0x30, 0x30,
             0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
             0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
@@ -914,7 +913,7 @@ mod test {
             0x31, 0x35, 0x20, 0x10, 0x20, 0x94, 0x20, 0x64, 0x0a,
         ];
         assert!(fuzz_data.len() >= 24);
-        let mut data = BytesMut::from(fuzz_data.clone());
+        let mut data = BytesMut::from(fuzz_data.as_slice());
         let msg_rslt = Message::parse_binary(&mut data);
         assert!(msg_rslt.is_err());
     }

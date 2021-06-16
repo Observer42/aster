@@ -1,7 +1,7 @@
 use bytes::BytesMut;
 use futures::task::Task;
 
-use tokio::codec::{Decoder, Encoder};
+use tokio_util::codec::{Decoder, Encoder};
 
 use crate::metrics::*;
 
@@ -258,10 +258,9 @@ impl Decoder for FrontCodec {
     }
 }
 
-impl Encoder for FrontCodec {
-    type Item = Cmd;
+impl Encoder<Cmd> for FrontCodec {
     type Error = AsError;
-    fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Cmd, dst: &mut BytesMut) -> Result<(), Self::Error> {
         let mut cmd = item.cmd.borrow_mut();
         if let Some(subs) = cmd.subs.as_ref().cloned() {
             for sub in subs {
@@ -287,10 +286,9 @@ impl Decoder for BackCodec {
     }
 }
 
-impl Encoder for BackCodec {
-    type Item = Cmd;
+impl Encoder<Cmd> for BackCodec {
     type Error = AsError;
-    fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Cmd, dst: &mut BytesMut) -> Result<(), Self::Error> {
         item.cmd.borrow().req.save_req(dst)
     }
 }
